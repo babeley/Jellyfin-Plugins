@@ -1,6 +1,6 @@
 name: "Catalogue"
 guid: "8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a"
-version: "1.0.0.0"
+version: "1.0.1.0"
 targetAbi: "12.0.0.0"
 framework: "net10.0"
 owner: "babeley"
@@ -16,4 +16,8 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.Catalogue.dll"
 changelog: |
+  - 1.0.1.0: Corrige l'enregistrement des réglages : la page de config utilisait un
+    <script> qui n'est jamais exécuté par la disposition Modern de Jellyfin 12 (le
+    HTML s'affiche mais aucun script séparé ne tourne). La logique est déplacée dans
+    des attributs onload/onsubmit inline, qui sont bien exécutés dans ce contexte.
   - 1.0.0.0: Version initiale. Bouton flottant configurable (URL + ouverture nouvel onglet/fenêtre courante).

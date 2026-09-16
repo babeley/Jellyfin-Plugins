@@ -7,7 +7,27 @@
     <div id="CatalogueConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
         <div data-role="content">
             <div class="content-primary">
-                <form id="CatalogueConfigForm">
+                <!--
+                    Jellyfin 12's Modern dashboard inserts this page's markup without executing
+                    any <script> tag it contains (confirmed empirically: the form renders fine,
+                    but no call to ApiClient.getPluginConfiguration ever fires from a <script>
+                    block). Inline onXXX="" attributes behave differently: browsers DO wire them
+                    up as real event handlers even when the surrounding HTML arrives via
+                    innerHTML-style insertion rather than a full page navigation. So all logic
+                    below lives in onload/onsubmit attributes instead of a separate <script>.
+                -->
+                <form id="CatalogueConfigForm" onsubmit="
+                    event.preventDefault();
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration('8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a').then(function (config) {
+                        config.CatalogueUrl = document.querySelector('#CatalogueUrl').value;
+                        config.OpenInNewTab = document.querySelector('#OpenInNewTab').checked;
+                        ApiClient.updatePluginConfiguration('8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a', config).then(function (result) {
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        });
+                    });
+                    return false;
+                ">
                     <div class="verticalSection">
                         <h2>Catalogue</h2>
                         <p>
@@ -43,39 +63,18 @@
             </div>
         </div>
     </div>
-    <script type="text/javascript">
-        (function () {
-            var PluginConfig = {
-                pluginUniqueId: '8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a'
-            };
-
-            document.querySelector('#CatalogueConfigPage')
-                .addEventListener('pageshow', function () {
-                    Dashboard.showLoadingMsg();
-                    ApiClient.getPluginConfiguration(PluginConfig.pluginUniqueId).then(function (config) {
-                        document.querySelector('#CatalogueUrl').value = config.CatalogueUrl || '';
-                        document.querySelector('#OpenInNewTab').checked = config.OpenInNewTab !== false;
-                        Dashboard.hideLoadingMsg();
-                    });
-                });
-
-            document.querySelector('#CatalogueConfigForm')
-                .addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    Dashboard.showLoadingMsg();
-
-                    ApiClient.getPluginConfiguration(PluginConfig.pluginUniqueId).then(function (config) {
-                        config.CatalogueUrl = document.querySelector('#CatalogueUrl').value;
-                        config.OpenInNewTab = document.querySelector('#OpenInNewTab').checked;
-
-                        ApiClient.updatePluginConfiguration(PluginConfig.pluginUniqueId, config).then(function (result) {
-                            Dashboard.processPluginConfigurationUpdateResult(result);
-                        });
-                    });
-
-                    return false;
-                });
-        })();
-    </script>
+    <!--
+        1x1 transparent GIF used purely as an "on-inserted" hook: an <img> starts loading (and
+        fires onload) as soon as it's parsed into the DOM, even via innerHTML-style insertion,
+        unlike <script> tags. This is what populates the form with the current saved config.
+    -->
+    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7" alt="" style="display:none" onload="
+        ApiClient.getPluginConfiguration('8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a').then(function (config) {
+            var urlField = document.querySelector('#CatalogueUrl');
+            var tabField = document.querySelector('#OpenInNewTab');
+            if (urlField) { urlField.value = config.CatalogueUrl || ''; }
+            if (tabField) { tabField.checked = config.OpenInNewTab !== false; }
+        });
+    " />
 </body>
 </html>
