@@ -1,0 +1,19 @@
+name: "Catalogue"
+guid: "8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a"
+version: "1.0.0.0"
+targetAbi: "12.0.0.0"
+framework: "net10.0"
+owner: "babeley"
+overview: "Bouton flottant qui ouvre un catalogue externe dans Jellyfin."
+description: >
+  Ajoute un bouton flottant (bandeau/coin de l'écran) au client web Jellyfin qui ouvre
+  une page de catalogue externe (par exemple une page web personnalisée) dans un nouvel
+  onglet ou la fenêtre courante. Compatible avec la disposition "Modern" (React/MUI) de
+  Jellyfin 12 car le bouton est injecté hors de l'arbre React, via le plugin
+  File Transformation. Nécessite l'installation préalable du plugin
+  "File Transformation" (https://github.com/IAmParadox27/jellyfin-plugin-file-transformation).
+category: "General"
+artifacts:
+  - "Jellyfin.Plugin.Catalogue.dll"
+changelog: |
+  - 1.0.0.0: Version initiale. Bouton flottant configurable (URL + ouverture nouvel onglet/fenêtre courante).

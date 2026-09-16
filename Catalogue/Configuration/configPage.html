@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Catalogue</title>
+</head>
+<body>
+    <div id="CatalogueConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="CatalogueConfigForm">
+                    <div class="verticalSection">
+                        <h2>Catalogue</h2>
+                        <p>
+                            Ajoute un bouton flottant qui ouvre votre catalogue externe dans le client web Jellyfin.
+                            Nécessite le plugin <strong>File Transformation</strong> (installé et Jellyfin redémarré).
+                        </p>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="CatalogueUrl">URL du catalogue (avec le token)</label>
+                        <input id="CatalogueUrl" name="CatalogueUrl" type="url" is="emby-input" placeholder="https://n8n.example.com/webhook/catalogue?token=..." required />
+                        <div class="fieldDescription">
+                            URL complète du catalogue, token d'accès inclus. Modifiable à tout moment sans reconstruire le plugin.
+                        </div>
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input id="OpenInNewTab" name="OpenInNewTab" type="checkbox" is="emby-checkbox" />
+                            <span>Ouvrir dans un nouvel onglet</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            Si décoché, le catalogue remplace l'onglet Jellyfin en cours.
+                        </div>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Enregistrer</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        (function () {
+            var PluginConfig = {
+                pluginUniqueId: '8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a'
+            };
+
+            document.querySelector('#CatalogueConfigPage')
+                .addEventListener('pageshow', function () {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(PluginConfig.pluginUniqueId).then(function (config) {
+                        document.querySelector('#CatalogueUrl').value = config.CatalogueUrl || '';
+                        document.querySelector('#OpenInNewTab').checked = config.OpenInNewTab !== false;
+                        Dashboard.hideLoadingMsg();
+                    });
+                });
+
+            document.querySelector('#CatalogueConfigForm')
+                .addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    Dashboard.showLoadingMsg();
+
+                    ApiClient.getPluginConfiguration(PluginConfig.pluginUniqueId).then(function (config) {
+                        config.CatalogueUrl = document.querySelector('#CatalogueUrl').value;
+                        config.OpenInNewTab = document.querySelector('#OpenInNewTab').checked;
+
+                        ApiClient.updatePluginConfiguration(PluginConfig.pluginUniqueId, config).then(function (result) {
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        });
+                    });
+
+                    return false;
+                });
+        })();
+    </script>
+</body>
+</html>

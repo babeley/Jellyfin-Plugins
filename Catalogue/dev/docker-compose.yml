@@ -1,0 +1,26 @@
+# Environnement Jellyfin local pour développer/tester le plugin sans toucher au serveur
+# de production. Voir ../README.md > "Développement local" pour le mode d'emploi complet.
+#
+# Usage :
+#   cd jellyfin-plugin-catalogue/dev
+#   ./build-and-install.sh          # compile le plugin et le copie dans plugins/Catalogue
+#   docker compose up -d
+#   -> http://localhost:8096 (assistant de configuration Jellyfin au premier lancement)
+#
+# Le plugin "File Transformation" (prérequis obligatoire) n'est PAS téléchargé
+# automatiquement : suivez les instructions du README pour le récupérer une fois,
+# il reste ensuite dans ./plugins/FileTransformation d'un lancement à l'autre.
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: catalogue-dev-jellyfin
+    ports:
+      - "8096:8096"
+    volumes:
+      - ./config:/config
+      - ./cache:/cache
+      - ./media:/media
+      - ./plugins/Catalogue:/config/plugins/Catalogue
+      - ./plugins/FileTransformation:/config/plugins/FileTransformation
+    restart: unless-stopped
