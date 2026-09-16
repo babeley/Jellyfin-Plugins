@@ -2,7 +2,7 @@
 # de production. Voir ../README.md > "Développement local" pour le mode d'emploi complet.
 #
 # Usage :
-#   cd jellyfin-plugin-catalogue/dev
+#   cd Catalogue/dev
 #   ./build-and-install.sh          # compile le plugin et le copie dans plugins/Catalogue
 #   docker compose up -d
 #   -> http://localhost:8096 (assistant de configuration Jellyfin au premier lancement)

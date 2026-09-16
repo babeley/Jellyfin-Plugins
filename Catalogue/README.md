@@ -1,10 +1,5 @@
 # Catalogue (plugin Jellyfin)
 
-> **Statut : en attente de migration.** Ce dossier vit temporairement dans le dépôt
-> `CarTable` (erreur d'aiguillage initiale) et n'a aucun rapport avec ce projet. Il est
-> conçu pour être déplacé tel quel vers son propre dépôt (`Jellyfin-Plugins` ou
-> équivalent) — voir "Migration vers son propre dépôt" plus bas.
-
 Ajoute un bouton flottant au client web Jellyfin qui ouvre une page externe (par
 exemple un catalogue personnalisé) dans un nouvel onglet ou la fenêtre courante.
 Fonctionne aussi bien avec l'ancienne interface Jellyfin que la nouvelle disposition
@@ -43,14 +38,17 @@ classes CSS générées par Emotion changent à chaque build de jellyfin-web, il
 
 Aucun accès fichier au serveur n'est nécessaire.
 
+> **Le dépôt GitHub doit être public.** Le serveur Jellyfin récupère le manifest sans
+> authentification : tant que `babeley/jellyfin-plugins` reste privé, l'étape 2
+> ci-dessous échouera (404). Passez le dépôt en public depuis Settings → Danger Zone →
+> Change visibility avant de continuer.
+
 1. **Installer le prérequis** : Dashboard → Plugins → Catalogue → chercher
    "File Transformation" → Installer → redémarrer Jellyfin.
 2. **Ajouter ce dépôt** : Dashboard → Plugins → Catalogue → Réglages (roue crantée) →
    Dépôts → Ajouter :
    - Nom : `Catalogue`
-   - URL du manifest : `https://raw.githubusercontent.com/babeley/jellyfin-plugins/main/catalogue/manifest.json`
-     (à remplacer par l'URL réelle une fois ce dossier migré vers son dépôt définitif —
-     voir la section suivante).
+   - URL du manifest : `https://raw.githubusercontent.com/babeley/jellyfin-plugins/main/Catalogue/manifest.json`
 3. Retourner dans le Catalogue, installer "Catalogue", redémarrer Jellyfin.
 4. Dashboard → Plugins → **Catalogue** : renseigner l'URL complète du catalogue (avec
    le token) et le mode d'ouverture, puis Enregistrer.
@@ -67,7 +65,7 @@ nouveau lien est pris en compte au prochain chargement de page (F5).
 ## Build local
 
 ```bash
-cd jellyfin-plugin-catalogue
+cd Catalogue
 dotnet build -c Release
 ```
 
@@ -81,7 +79,7 @@ officiel de packaging des plugins Jellyfin.
 ```bash
 pip install jprm
 
-jprm plugin build jellyfin-plugin-catalogue \
+jprm plugin build Catalogue \
   --output=artifacts \
   --version=1.0.0.0 \
   --dotnet-framework=net10.0
@@ -100,16 +98,15 @@ git push origin catalogue-v1.0.0.0
 ```
 
 Il compile le plugin, publie une Release GitHub avec le zip en pièce jointe, puis met à
-jour `jellyfin-plugin-catalogue/manifest.json` (utilisé par "Ajouter un dépôt") et
-pousse ce fichier sur `main`. Pensez à incrémenter `version` dans `build.yaml` en
-cohérence avec le tag.
+jour `Catalogue/manifest.json` (utilisé par "Ajouter un dépôt") et pousse ce fichier sur
+`main`. Pensez à incrémenter `version` dans `build.yaml` en cohérence avec le tag.
 
 ## Développement local (Docker)
 
 Pour itérer sans toucher au serveur de production :
 
 ```bash
-cd jellyfin-plugin-catalogue/dev
+cd Catalogue/dev
 ./build-and-install.sh        # compile et copie la DLL dans plugins/Catalogue
 docker compose up -d
 ```
@@ -136,7 +133,7 @@ production.
 ## Structure du projet
 
 ```
-jellyfin-plugin-catalogue/
+Catalogue/
 ├── Plugin.cs                     Point d'entrée du plugin (BasePlugin, page de config)
 ├── Configuration/
 │   ├── PluginConfiguration.cs    CatalogueUrl, OpenInNewTab

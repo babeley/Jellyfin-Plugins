@@ -1,0 +1,7 @@
+bin/
+obj/
+*.zip
+dev/config/
+dev/cache/
+dev/media/
+dev/plugins/
