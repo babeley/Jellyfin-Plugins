@@ -8,6 +8,14 @@
         "category": "General",
         "versions": [
             {
+                "version": "1.0.1.0",
+                "changelog": "- 1.0.1.0: Corrige l'enregistrement des r\u00e9glages : la page de config utilisait un\n  <script> qui n'est jamais ex\u00e9cut\u00e9 par la disposition Modern de Jellyfin 12 (le\n  HTML s'affiche mais aucun script s\u00e9par\u00e9 ne tourne). La logique est d\u00e9plac\u00e9e dans\n  des attributs onload/onsubmit inline, qui sont bien ex\u00e9cut\u00e9s dans ce contexte.\n- 1.0.0.0: Version initiale. Bouton flottant configurable (URL + ouverture nouvel onglet/fen\u00eatre courante).\n",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/babeley/Jellyfin-Plugins/releases/download/catalogue-v1.0.1.0/catalogue_1.0.1.0.zip",
+                "checksum": "7d0fd9eec5c14cdfc69ffb3f96874f3d",
+                "timestamp": "2026-09-16T22:38:48Z"
+            },
+            {
                 "version": "1.0.0.0",
                 "changelog": "- 1.0.0.0: Version initiale. Bouton flottant configurable (URL + ouverture nouvel onglet/fen\u00eatre courante).\n",
                 "targetAbi": "12.0.0.0",
