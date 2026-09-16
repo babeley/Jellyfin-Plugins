@@ -48,7 +48,7 @@ Aucun accès fichier au serveur n'est nécessaire.
 2. **Ajouter ce dépôt** : Dashboard → Plugins → Catalogue → Réglages (roue crantée) →
    Dépôts → Ajouter :
    - Nom : `Catalogue`
-   - URL du manifest : `https://raw.githubusercontent.com/<owner>/<repo>/main/jellyfin-plugin-catalogue/manifest.json`
+   - URL du manifest : `https://raw.githubusercontent.com/babeley/jellyfin-plugins/main/catalogue/manifest.json`
      (à remplacer par l'URL réelle une fois ce dossier migré vers son dépôt définitif —
      voir la section suivante).
 3. Retourner dans le Catalogue, installer "Catalogue", redémarrer Jellyfin.
@@ -57,21 +57,6 @@ Aucun accès fichier au serveur n'est nécessaire.
 
 Le manifest n'existe qu'à partir de la première release publiée (voir plus bas) : tant
 qu'aucun tag n'a été poussé, le dépôt apparaît vide dans le Catalogue.
-
-## Migration vers son propre dépôt
-
-Ce dossier est autonome : il ne référence rien d'autre dans le dépôt `CarTable`. Pour le
-déplacer vers un dépôt dédié (ex. `Jellyfin-Plugins`) :
-
-1. Créer le nouveau dépôt GitHub.
-2. Copier le contenu de `jellyfin-plugin-catalogue/` à la racine du nouveau dépôt (ou
-   dans un sous-dossier si le dépôt doit héberger plusieurs plugins).
-3. Copier `.github/workflows/release-catalogue-plugin.yml` vers le nouveau dépôt, en
-   ajustant le chemin `jellyfin-plugin-catalogue` dans le workflow s'il ne correspond
-   plus à l'emplacement choisi à l'étape précédente.
-4. Mettre à jour l'URL du manifest dans les instructions ci-dessus avec le nom réel du
-   nouveau dépôt.
-5. Supprimer `jellyfin-plugin-catalogue/` et le workflow associé du dépôt `CarTable`.
 
 ## Changer l'URL du catalogue plus tard
 
