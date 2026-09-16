@@ -1,0 +1,83 @@
+name: Release Catalogue plugin
+
+on:
+  push:
+    tags:
+      - "catalogue-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install jprm
+        run: pip install jprm
+
+      - name: Determine version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#catalogue-v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build plugin package
+        id: build
+        run: |
+          mkdir -p artifacts
+          ZIP_PATH=$(jprm plugin build Catalogue \
+            --output=artifacts \
+            --version="${{ steps.version.outputs.version }}" \
+            --dotnet-framework=net10.0)
+          echo "zip_path=${ZIP_PATH}" >> "$GITHUB_OUTPUT"
+          echo "zip_name=$(basename "${ZIP_PATH}")" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "Catalogue ${{ steps.version.outputs.version }}"
+          files: ${{ steps.build.outputs.zip_path }}
+
+      - name: Update repository manifest.json
+        run: |
+          MANIFEST=Catalogue/manifest.json
+          if [ ! -f "$MANIFEST" ]; then
+            echo "[]" > "$MANIFEST"
+          fi
+
+          ASSET_URL="https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/${{ steps.build.outputs.zip_name }}"
+
+          jprm repo add \
+            --plugin-url="${ASSET_URL}" \
+            "$MANIFEST" \
+            "${{ steps.build.outputs.zip_path }}"
+
+      - name: Commit updated manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Catalogue/manifest.json
+          if git diff --cached --quiet; then
+            echo "Manifest unchanged, nothing to commit."
+          else
+            git commit -m "Update Catalogue plugin manifest for ${{ steps.version.outputs.tag }}"
+            git push origin HEAD:main
+          fi
