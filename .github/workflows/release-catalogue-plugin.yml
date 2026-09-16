@@ -58,7 +58,11 @@ jobs:
 
       - name: Update repository manifest.json
         run: |
-          MANIFEST=manifest.json
+          # jprm's REPO_PATH validation checks os.path.dirname(REPO_PATH) exists; for a
+          # bare filename like "manifest.json" that dirname is "", which jprm treats as
+          # a missing directory and refuses ("The directory `` does not exist"). Using
+          # an absolute path sidesteps this.
+          MANIFEST="$GITHUB_WORKSPACE/manifest.json"
           if [ ! -f "$MANIFEST" ]; then
             echo "[]" > "$MANIFEST"
           fi

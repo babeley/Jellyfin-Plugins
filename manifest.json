@@ -1,1 +1,20 @@
-[]
+[
+    {
+        "guid": "8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a",
+        "name": "Catalogue",
+        "description": "Ajoute un bouton flottant (bandeau/coin de l'\u00e9cran) au client web Jellyfin qui ouvre une page de catalogue externe (par exemple une page web personnalis\u00e9e) dans un nouvel onglet ou la fen\u00eatre courante. Compatible avec la disposition \"Modern\" (React/MUI) de Jellyfin 12 car le bouton est inject\u00e9 hors de l'arbre React, via le plugin File Transformation. N\u00e9cessite l'installation pr\u00e9alable du plugin \"File Transformation\" (https://github.com/IAmParadox27/jellyfin-plugin-file-transformation).\n",
+        "overview": "Bouton flottant qui ouvre un catalogue externe dans Jellyfin.",
+        "owner": "babeley",
+        "category": "General",
+        "versions": [
+            {
+                "version": "1.0.0.0",
+                "changelog": "- 1.0.0.0: Version initiale. Bouton flottant configurable (URL + ouverture nouvel onglet/fen\u00eatre courante).\n",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/babeley/Jellyfin-Plugins/releases/download/catalogue-v1.0.0.0/catalogue_1.0.0.0.zip",
+                "checksum": "b5f5e9d7185da1fb688d694dfa8010b9",
+                "timestamp": "2026-09-16T21:26:01Z"
+            }
+        ]
+    }
+]
