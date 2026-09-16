@@ -38,17 +38,15 @@ classes CSS générées par Emotion changent à chaque build de jellyfin-web, il
 
 Aucun accès fichier au serveur n'est nécessaire.
 
-> **Le dépôt GitHub doit être public.** Le serveur Jellyfin récupère le manifest sans
-> authentification : tant que `babeley/jellyfin-plugins` reste privé, l'étape 2
-> ci-dessous échouera (404). Passez le dépôt en public depuis Settings → Danger Zone →
-> Change visibility avant de continuer.
-
 1. **Installer le prérequis** : Dashboard → Plugins → Catalogue → chercher
    "File Transformation" → Installer → redémarrer Jellyfin.
 2. **Ajouter ce dépôt** : Dashboard → Plugins → Catalogue → Réglages (roue crantée) →
    Dépôts → Ajouter :
-   - Nom : `Catalogue`
-   - URL du manifest : `https://raw.githubusercontent.com/babeley/jellyfin-plugins/main/Catalogue/manifest.json`
+   - Nom : `Jellyfin-Plugins`
+   - URL du manifest : `https://raw.githubusercontent.com/babeley/jellyfin-plugins/main/manifest.json`
+
+   Ce manifest est unique pour tout le dépôt `Jellyfin-Plugins` (voir le README à la
+   racine) : il liste tous les plugins qui y sont publiés, pas seulement Catalogue.
 3. Retourner dans le Catalogue, installer "Catalogue", redémarrer Jellyfin.
 4. Dashboard → Plugins → **Catalogue** : renseigner l'URL complète du catalogue (avec
    le token) et le mode d'ouverture, puis Enregistrer.
@@ -98,8 +96,9 @@ git push origin catalogue-v1.0.0.0
 ```
 
 Il compile le plugin, publie une Release GitHub avec le zip en pièce jointe, puis met à
-jour `Catalogue/manifest.json` (utilisé par "Ajouter un dépôt") et pousse ce fichier sur
-`main`. Pensez à incrémenter `version` dans `build.yaml` en cohérence avec le tag.
+jour `manifest.json` (à la racine du dépôt, utilisé par "Ajouter un dépôt" — voir
+"Manifest partagé" dans le README racine) et pousse ce fichier sur `main`. Pensez à
+incrémenter `version` dans `build.yaml` en cohérence avec le tag.
 
 ## Développement local (Docker)
 
@@ -150,9 +149,11 @@ Catalogue/
 ├── Inject/
 │   └── catalogue-link.js         Script injecté côté client (bouton flottant)
 ├── build.yaml                    Métadonnées du plugin (jprm)
-├── manifest.json                 Dépôt Jellyfin (généré/mis à jour par la CI)
 └── dev/                          Environnement Docker de développement local
 ```
+
+Le manifest du dépôt Jellyfin (`manifest.json`, partagé par tous les plugins) vit à la
+racine du dépôt, pas dans ce dossier — voir le README racine.
 
 ## Limites connues de cette v1
 
