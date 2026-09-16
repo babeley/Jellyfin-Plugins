@@ -4,8 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <Version>1.0.1.0</Version>
+        <Version>1.0.2.0</Version>
         <RootNamespace>Jellyfin.Plugin.Catalogue</RootNamespace>
         <AssemblyName>Jellyfin.Plugin.Catalogue</AssemblyName>
     </PropertyGroup>
