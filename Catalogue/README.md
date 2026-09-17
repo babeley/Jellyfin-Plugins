@@ -102,8 +102,16 @@ git push origin catalogue-v1.0.0.0
 
 Il compile le plugin, publie une Release GitHub avec le zip en pièce jointe, puis met à
 jour `manifest.json` (à la racine du dépôt, utilisé par "Ajouter un dépôt" — voir
-"Manifest partagé" dans le README racine) et pousse ce fichier sur `main`. Pensez à
-incrémenter `version` dans `build.yaml` en cohérence avec le tag.
+"Manifest partagé" dans le README racine) et pousse ce fichier sur `main`.
+
+Avant de taguer, dans `build.yaml` :
+1. Incrémenter `version` en cohérence avec le tag.
+2. Remplacer le champ `changelog` par **la seule entrée de cette version** (pas
+   l'historique complet). `jprm` copie ce champ tel quel dans le `meta.json` de la
+   release, qui devient le `changelog` de cette entrée dans `manifest.json` — s'il
+   contient tout l'historique, chaque version affichée dans Jellyfin (Dashboard →
+   Plugins → Catalogue → Historique des révisions) affiche alors le même texte cumulé
+   au lieu de son propre delta. L'historique complet, lui, va dans `CHANGELOG.md`.
 
 ## Développement local (Docker)
 
@@ -153,7 +161,8 @@ Catalogue/
 │   └── CatalogueConfig.cs        Réponse JSON de l'endpoint Config
 ├── Inject/
 │   └── catalogue-link.js         Script injecté côté client (bouton flottant)
-├── build.yaml                    Métadonnées du plugin (jprm)
+├── build.yaml                    Métadonnées du plugin (jprm) — changelog = version en cours uniquement
+├── CHANGELOG.md                  Historique complet des versions
 └── dev/                          Environnement Docker de développement local
 ```
 
