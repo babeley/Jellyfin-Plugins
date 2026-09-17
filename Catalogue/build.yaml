@@ -1,6 +1,6 @@
 name: "Catalogue"
 guid: "8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a"
-version: "1.1.0.0"
+version: "1.2.0.0"
 targetAbi: "12.0.0.0"
 framework: "net10.0"
 owner: "babeley"
@@ -16,6 +16,12 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.Catalogue.dll"
 changelog: |
+  - 1.2.0.0: Le bouton (icône + libellé "Catalogue", plus de bulle d'aide) s'insère
+    maintenant dans la ligne de liens du bandeau (juste après le logo), avec repli sur
+    la barre d'icônes puis sur un bouton flottant si introuvable. Le même bouton sert
+    à fermer la surimpression (devient "Fermer"), qui occupe maintenant tout l'espace
+    sous le bandeau sans marge. La surimpression se ferme automatiquement dès qu'on
+    change de vue dans Jellyfin.
   - 1.1.0.0: Le bouton s'intègre maintenant dans le bandeau Jellyfin (à côté des
     icônes cast/recherche/avatar) au lieu de flotter en bas à droite, avec repli
     automatique en bouton flottant si le bandeau n'est pas trouvé. Quand "Ouvrir
