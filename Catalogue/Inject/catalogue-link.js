@@ -23,10 +23,14 @@
     var HEADER_SEARCH_ATTEMPTS = 30;
     var HEADER_SEARCH_INTERVAL_MS = 300;
 
+    // Folder/binder glyph - more explicit than a plain list for "Catalogue".
     var ICON_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">'
-        + '<path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>';
+        + '<path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"></path></svg>';
     var CLOSE_ICON_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">'
         + '<path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6z"></path></svg>';
+
+    var ACTIVE_STYLE_ID = 'catalogueLinkActiveStyle';
+    var ACTIVE_CLASS = 'catalogueLinkActive';
 
     window.catalogueLinkPlugin = {
         config: null,
@@ -35,8 +39,28 @@
         headerObserver: null,
 
         init: function () {
+            this.injectActiveStyle();
             this.waitForApiClient();
             this.observeNavigation();
+        },
+
+        // Injected once: a high-specificity class for the "open/Fermer" state, so it
+        // stays visibly accented regardless of which tier's neutral classes the button
+        // otherwise carries (copied nav-link, copied icon-button, or the floating pill).
+        injectActiveStyle: function () {
+            if (document.getElementById(ACTIVE_STYLE_ID)) {
+                return;
+            }
+
+            var style = document.createElement('style');
+            style.id = ACTIVE_STYLE_ID;
+            style.textContent = '#' + BUTTON_ID + '.' + ACTIVE_CLASS + ' {'
+                + 'background: #00a4dc !important;'
+                + 'color: #fff !important;'
+                + 'border-radius: 20px !important;'
+                + 'padding: 6px 12px !important;'
+                + '}';
+            document.head.appendChild(style);
         },
 
         waitForApiClient: function () {
@@ -175,7 +199,7 @@
             link.id = BUTTON_ID;
             link.type = 'button';
             link.setAttribute('aria-label', 'Catalogue');
-            link.dataset.catalogueLabeled = '1';
+            link.dataset.catalogueLabeled = '0';
 
             link.style.position = 'fixed';
             link.style.right = '20px';
@@ -183,9 +207,11 @@
             link.style.zIndex = '2147483000';
             link.style.display = 'inline-flex';
             link.style.alignItems = 'center';
-            link.style.gap = '6px';
-            link.style.padding = '8px 14px';
-            link.style.borderRadius = '20px';
+            link.style.justifyContent = 'center';
+            link.style.width = '40px';
+            link.style.height = '40px';
+            link.style.padding = '0';
+            link.style.borderRadius = '50%';
             link.style.border = 'none';
             link.style.background = '#00a4dc';
             link.style.color = '#fff';
@@ -204,7 +230,8 @@
         },
 
         // Swaps a button's icon/label between the "open" (Catalogue) and "close" (Fermer)
-        // states, keeping whatever classes/positioning it already has.
+        // states, keeping whatever classes/positioning it already has, and toggles the
+        // accented "active" class so the close state stands out.
         renderButtonContent: function (button, isOpenState) {
             var labeled = button.dataset.catalogueLabeled === '1';
             var icon = isOpenState ? CLOSE_ICON_SVG : ICON_SVG;
@@ -218,6 +245,7 @@
             }
 
             button.setAttribute('aria-label', label);
+            button.classList.toggle(ACTIVE_CLASS, isOpenState);
         },
 
         setButtonState: function (isOpenState) {
@@ -276,7 +304,11 @@
             overlay.style.bottom = '0';
             overlay.style.top = this.getHeaderHeight() + 'px';
             overlay.style.background = '#101010';
-            overlay.style.zIndex = '2147482999';
+            // Below MUI's default modal/menu/tooltip z-indices (1300/1400/1500) so
+            // Jellyfin's own dropdowns (the "Plus" menu, the avatar menu, ...) still
+            // render above the overlay instead of being hidden behind it. Still well
+            // above ordinary page content.
+            overlay.style.zIndex = '1250';
             overlay.style.display = 'none';
 
             var iframe = document.createElement('iframe');
