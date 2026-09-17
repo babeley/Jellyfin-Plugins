@@ -1,11 +1,11 @@
 # Catalogue (plugin Jellyfin)
 
-Ajoute un bouton "Catalogue" dans le bandeau du client web Jellyfin (juste après le
-logo, au milieu des liens de navigation) qui ouvre une page externe (par exemple un
-catalogue personnalisé) — soit dans un nouvel onglet, soit dans une iframe en
-surimpression qui garde le bandeau Jellyfin visible. Fonctionne aussi bien avec
-l'ancienne interface Jellyfin que la nouvelle disposition **Modern** (React/MUI) de
-Jellyfin 12.
+Ajoute un bouton dans le bandeau du client web Jellyfin (icône classeur, juste à gauche
+de l'avatar) qui ouvre une page externe (par exemple un catalogue personnalisé) — soit
+dans un nouvel onglet, soit dans une iframe en surimpression qui garde le bandeau
+Jellyfin visible. Fonctionne aussi bien avec l'ancienne interface Jellyfin que la
+nouvelle disposition **Modern** (React/MUI) de Jellyfin 12, et de façon identique sur
+toutes les vues (bibliothèque comme tableau de bord admin).
 
 ## Comment ça marche
 
@@ -13,16 +13,14 @@ Jellyfin 12.
    [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation)
    (prérequis obligatoire) pour patcher `index.html` et y injecter un `<script>` juste
    avant `</body>`.
-2. Ce script cherche la ligne de liens de navigation du bandeau React/MUI (Favoris,
-   Films, ...) et y insère un bouton juste après le logo, en copiant les classes CSS
-   d'un lien voisin (les classes générées par Emotion changent à chaque build de
-   jellyfin-web, donc on les récupère en direct plutôt que de les coder en dur). Si
-   cette ligne n'est pas trouvée, repli sur la barre d'icônes (cast/recherche/avatar),
-   puis en dernier recours sur un bouton flottant. Un `MutationObserver` réinsère le
-   bouton à chaque fois que React le retire lors d'un re-render. **C'est la partie la
-   plus fragile du plugin** : si la structure du bandeau change dans une future version
-   de jellyfin-web, les sélecteurs peuvent ne plus correspondre — d'où les paliers de
-   repli plutôt que de ne rien afficher.
+2. Ce script ajoute un bouton directement à `document.body`, **en dehors** de l'arbre
+   React (jamais comme enfant d'un conteneur que React gère). Une première version
+   insérait le bouton comme enfant réel du bandeau ; ça cassait parfois la
+   réconciliation de React et provoquait l'affichage d'un bandeau dupliqué en
+   naviguant. Le bouton est donc en `position: fixed`, positionné dynamiquement (calcul
+   de la position de l'avatar via `getBoundingClientRect`, recalculé au
+   redimensionnement et périodiquement) pour rester visuellement ancré juste à gauche
+   de l'avatar, sans jamais être un nœud du DOM que React gère.
 3. Au clic, selon le réglage "Ouvrir dans un nouvel onglet" du Dashboard :
    - activé → `window.open()` classique dans un nouvel onglet ;
    - désactivé → une iframe s'ouvre en surimpression, occupant tout l'espace sous le
@@ -164,11 +162,10 @@ racine du dépôt, pas dans ce dossier — voir le README racine.
 
 ## Limites connues
 
-- L'intégration dans le bandeau dépend de classes MUI (`MuiAppBar-root`,
-  `MuiStack-root`, `MuiIconButton-root`) qui sont stables d'un build à l'autre
-  (contrairement aux classes Emotion générées), mais une refonte du bandeau dans une
-  future version de jellyfin-web peut casser la détection — d'où le repli en bouton
-  flottant.
+- Le positionnement du bouton dépend de la structure MUI (`MuiAppBar-root`) pour
+  repérer l'avatar ; une refonte du bandeau dans une future version de jellyfin-web
+  peut décaler ou masquer le calcul de position (le bouton reste flottant en `fixed`
+  dans tous les cas, jamais totalement invisible).
 - L'iframe en surimpression dépend de l'autorisation d'affichage en iframe côté page
   cible (voir ci-dessus).
 - Une seule cible configurable (une URL). Pas de gestion multi-liens.

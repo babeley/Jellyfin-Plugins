@@ -1,18 +1,21 @@
 // Injected into jellyfin-web's index.html by the Catalogue plugin.
 //
-// Two parts:
-// 1. A labeled button (icon + "Catalogue" text, like the other nav links) inserted
-//    right after the Jellyfin logo in the header's nav row. React owns that row and
-//    wipes any child it didn't render itself on every re-render, so a MutationObserver
-//    re-inserts our button whenever it disappears. This is inherently coupled to
-//    jellyfin-web's current MUI markup and can break on a jellyfin-web update - if the
-//    nav row (or, failing that, the icon-only toolbar) can't be found, we fall back to
-//    a floating button instead of showing nothing.
-// 2. An in-app overlay with an iframe, toggled by that same button (which turns into a
-//    "Fermer" button while open), so the Jellyfin header stays visible above the
-//    catalogue instead of navigating away from Jellyfin entirely. Used when "Open in
-//    new tab" is off; otherwise we just window.open() it. The overlay also closes
-//    itself when the user navigates to another Jellyfin view.
+// v1.2.1.0 inserted the button as a literal DOM child of the header's React-managed
+// nav-link row / icon toolbar. That caused React's reconciliation to get confused on
+// navigation (an untracked extra child throws off its index/key-based diffing) and
+// occasionally rendered a whole duplicate header. This version never touches a
+// React-managed container at all: the button is a position:fixed element appended to
+// document.body (a sibling of the React root, not a child of anything React owns), and
+// its screen position is computed from the avatar button's live bounding box instead of
+// being structurally inserted next to it. Slightly less "native" looking, but immune to
+// that class of bug - and consistent across every view (including admin pages that don't
+// share the library's header layout), which was also requested.
+//
+// The same button doubles as the overlay's close control: an in-app iframe overlay,
+// toggled by clicking it (icon swaps to a close glyph while open), keeps the Jellyfin
+// header visible above the catalogue instead of navigating away from Jellyfin entirely.
+// Used when "Open in new tab" is off; otherwise we just window.open() it. The overlay
+// closes itself when the user navigates to another Jellyfin view.
 (function () {
     if (window.catalogueLinkPlugin) {
         return;
@@ -20,45 +23,40 @@
 
     var BUTTON_ID = 'catalogueLinkButton';
     var OVERLAY_ID = 'catalogueLinkOverlay';
-    var HEADER_SEARCH_ATTEMPTS = 30;
-    var HEADER_SEARCH_INTERVAL_MS = 300;
+    var BUTTON_SIZE = 40;
+    var BUTTON_GAP = 8;
 
-    // Folder/binder glyph - more explicit than a plain list for "Catalogue".
+    // Folder/binder glyph - explicit for "Catalogue".
     var ICON_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">'
         + '<path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"></path></svg>';
     var CLOSE_ICON_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">'
         + '<path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6z"></path></svg>';
 
-    var ACTIVE_STYLE_ID = 'catalogueLinkActiveStyle';
-    var ACTIVE_CLASS = 'catalogueLinkActive';
-
     window.catalogueLinkPlugin = {
         config: null,
         isOverlayOpen: false,
-        headerAttempts: 0,
-        headerObserver: null,
 
         init: function () {
-            this.injectActiveStyle();
+            this.injectStyle();
             this.waitForApiClient();
             this.observeNavigation();
         },
 
-        // Injected once: a high-specificity class for the "open/Fermer" state, so it
-        // stays visibly accented regardless of which tier's neutral classes the button
-        // otherwise carries (copied nav-link, copied icon-button, or the floating pill).
-        injectActiveStyle: function () {
-            if (document.getElementById(ACTIVE_STYLE_ID)) {
-                return;
-            }
-
+        // Injected once: the button's own look (we no longer copy classes from any
+        // Jellyfin element, so we own its styling outright) plus the accented "close"
+        // state.
+        injectStyle: function () {
             var style = document.createElement('style');
-            style.id = ACTIVE_STYLE_ID;
-            style.textContent = '#' + BUTTON_ID + '.' + ACTIVE_CLASS + ' {'
-                + 'background: #00a4dc !important;'
-                + 'color: #fff !important;'
-                + 'border-radius: 20px !important;'
-                + 'padding: 6px 12px !important;'
+            style.textContent =
+                '#' + BUTTON_ID + ' {'
+                + 'position: fixed; width: ' + BUTTON_SIZE + 'px; height: ' + BUTTON_SIZE + 'px;'
+                + 'border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center;'
+                + 'background: transparent; color: rgba(255, 255, 255, 0.85); cursor: pointer;'
+                + 'z-index: 1100;'
+                + '}'
+                + '#' + BUTTON_ID + ':hover { background: rgba(255, 255, 255, 0.1); }'
+                + '#' + BUTTON_ID + '.catalogueLinkActive, #' + BUTTON_ID + '.catalogueLinkActive:hover {'
+                + 'background: #00a4dc; color: #fff;'
                 + '}';
             document.head.appendChild(style);
         },
@@ -87,62 +85,16 @@
 
                 window.catalogueLinkPlugin.config = config;
                 window.catalogueLinkPlugin.createOverlay();
-                window.catalogueLinkPlugin.tryInsertButton();
+                window.catalogueLinkPlugin.renderButton();
+                window.catalogueLinkPlugin.watchPosition();
             }).catch(function (error) {
                 console.error('Catalogue: failed to fetch config', error);
             });
         },
 
-        // --- Locating an insertion point in the header ---
+        // --- Button: created once, outside the React tree, repositioned continuously ---
 
-        // Prefers the row of text nav links (Favoris, Films, ...), inserting right
-        // after the logo (i.e. as that row's first item). Falls back to the icon-only
-        // toolbar (cast/search/avatar) if the nav row can't be identified.
-        findInsertionTarget: function () {
-            var header = document.querySelector('header.MuiAppBar-root, .MuiAppBar-root');
-            if (!header) {
-                return null;
-            }
-
-            var navLinks = header.querySelectorAll('a[href*="#"]');
-            for (var i = 0; i < navLinks.length; i++) {
-                var parent = navLinks[i].parentElement;
-                if (parent && parent.children.length > 1) {
-                    return { container: parent, reference: navLinks[i], insertFirst: true, labeled: true };
-                }
-            }
-
-            var iconBar = header.querySelector('.MuiStack-root, .MuiToolbar-root');
-            var referenceIcon = iconBar ? iconBar.querySelector('.MuiIconButton-root, .MuiButtonBase-root') : null;
-            if (iconBar && referenceIcon) {
-                return { container: iconBar, reference: referenceIcon, insertFirst: false, labeled: false };
-            }
-
-            return null;
-        },
-
-        tryInsertButton: function () {
-            if (document.getElementById(BUTTON_ID)) {
-                return;
-            }
-
-            var target = this.findInsertionTarget();
-            if (target) {
-                this.insertButton(target);
-                this.observeHeader();
-                return;
-            }
-
-            this.headerAttempts++;
-            if (this.headerAttempts < HEADER_SEARCH_ATTEMPTS) {
-                setTimeout(this.tryInsertButton.bind(this), HEADER_SEARCH_INTERVAL_MS);
-            } else {
-                console.debug('Catalogue: header not found after retries, using a floating button instead');
-                this.renderFloatingButton();
-            }
-        },
-
-        insertButton: function (target) {
+        renderButton: function () {
             if (document.getElementById(BUTTON_ID)) {
                 return;
             }
@@ -150,109 +102,83 @@
             var button = document.createElement('button');
             button.id = BUTTON_ID;
             button.type = 'button';
-            // Copy a neighboring nav item's live classes so ours matches the current
-            // build's MUI/Emotion styling instead of hardcoding class names that change
-            // on every jellyfin-web build.
-            button.className = target.reference ? target.reference.className : '';
+            button.innerHTML = ICON_SVG;
+            button.title = 'Catalogue';
             button.setAttribute('aria-label', 'Catalogue');
-            button.dataset.catalogueLabeled = target.labeled ? '1' : '0';
-
-            this.renderButtonContent(button, false);
 
             button.addEventListener('click', function (e) {
                 e.preventDefault();
                 window.catalogueLinkPlugin.handleClick();
             });
 
-            if (target.insertFirst) {
-                target.container.insertBefore(button, target.container.firstChild);
-            } else {
-                target.container.insertBefore(button, target.reference || null);
-            }
+            document.body.appendChild(button);
+            this.positionButton();
         },
 
-        observeHeader: function () {
-            if (this.headerObserver) {
+        // The rightmost actionable element in the header is the avatar/profile button
+        // in every Jellyfin view we've seen (library pages and admin pages alike), so we
+        // anchor to it rather than assuming a specific header layout.
+        findAvatarButton: function () {
+            var header = document.querySelector('header.MuiAppBar-root, .MuiAppBar-root');
+            if (!header) {
+                return null;
+            }
+
+            var candidates = header.querySelectorAll('button, a[role="button"], .MuiIconButton-root, .MuiButtonBase-root');
+            if (candidates.length === 0) {
+                return null;
+            }
+
+            var last = candidates[candidates.length - 1];
+            return last.getBoundingClientRect().width > 0 ? last : null;
+        },
+
+        positionButton: function () {
+            var button = document.getElementById(BUTTON_ID);
+            if (!button) {
                 return;
             }
 
+            var avatar = this.findAvatarButton();
+            if (avatar) {
+                var rect = avatar.getBoundingClientRect();
+                button.style.top = (rect.top + (rect.height - BUTTON_SIZE) / 2) + 'px';
+                button.style.left = (rect.left - BUTTON_SIZE - BUTTON_GAP) + 'px';
+            } else {
+                // Header not found (yet, or on this view): fixed fallback position.
+                button.style.top = '12px';
+                button.style.left = (window.innerWidth - BUTTON_SIZE - 16) + 'px';
+            }
+        },
+
+        watchPosition: function () {
             var self = this;
-            this.headerObserver = new MutationObserver(function () {
-                if (document.getElementById(BUTTON_ID)) {
-                    return;
-                }
-                var target = self.findInsertionTarget();
-                if (target) {
-                    self.insertButton(target);
-                }
+
+            window.addEventListener('resize', function () {
+                self.positionButton();
             });
 
-            this.headerObserver.observe(document.body, { childList: true, subtree: true });
+            // Re-check periodically rather than via a MutationObserver: we only read
+            // positions here (never insert/remove DOM nodes), so there is no risk of
+            // interfering with React, but a MutationObserver on the whole header would
+            // fire far more often than needed for something this cheap to just poll.
+            setInterval(function () {
+                self.positionButton();
+            }, 1000);
         },
 
-        renderFloatingButton: function () {
-            if (document.getElementById(BUTTON_ID)) {
-                return;
-            }
-
-            var link = document.createElement('button');
-            link.id = BUTTON_ID;
-            link.type = 'button';
-            link.setAttribute('aria-label', 'Catalogue');
-            link.dataset.catalogueLabeled = '0';
-
-            link.style.position = 'fixed';
-            link.style.right = '20px';
-            link.style.top = '20px';
-            link.style.zIndex = '2147483000';
-            link.style.display = 'inline-flex';
-            link.style.alignItems = 'center';
-            link.style.justifyContent = 'center';
-            link.style.width = '40px';
-            link.style.height = '40px';
-            link.style.padding = '0';
-            link.style.borderRadius = '50%';
-            link.style.border = 'none';
-            link.style.background = '#00a4dc';
-            link.style.color = '#fff';
-            link.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.45)';
-            link.style.cursor = 'pointer';
-            link.style.font = 'inherit';
-
-            this.renderButtonContent(link, false);
-
-            link.addEventListener('click', function (e) {
-                e.preventDefault();
-                window.catalogueLinkPlugin.handleClick();
-            });
-
-            document.body.appendChild(link);
-        },
-
-        // Swaps a button's icon/label between the "open" (Catalogue) and "close" (Fermer)
-        // states, keeping whatever classes/positioning it already has, and toggles the
-        // accented "active" class so the close state stands out.
-        renderButtonContent: function (button, isOpenState) {
-            var labeled = button.dataset.catalogueLabeled === '1';
-            var icon = isOpenState ? CLOSE_ICON_SVG : ICON_SVG;
-            var label = isOpenState ? 'Fermer' : 'Catalogue';
-
-            if (labeled) {
-                button.innerHTML = icon + '<span style="margin-left:6px;">' + label + '</span>';
-            } else {
-                button.innerHTML = icon;
-                button.title = label;
-            }
-
-            button.setAttribute('aria-label', label);
-            button.classList.toggle(ACTIVE_CLASS, isOpenState);
-        },
-
+        // Swaps the button between the "open" (Catalogue) and "close" (Fermer) states.
         setButtonState: function (isOpenState) {
             var button = document.getElementById(BUTTON_ID);
-            if (button) {
-                this.renderButtonContent(button, isOpenState);
+            if (!button) {
+                return;
             }
+
+            button.innerHTML = isOpenState ? CLOSE_ICON_SVG : ICON_SVG;
+            var label = isOpenState ? 'Fermer' : 'Catalogue';
+            button.title = label;
+            button.setAttribute('aria-label', label);
+            button.classList.toggle('catalogueLinkActive', isOpenState);
         },
 
         // --- Click behavior: separate tab, or in-app overlay toggle ---
