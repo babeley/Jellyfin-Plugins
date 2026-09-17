@@ -1,6 +1,6 @@
 name: "Catalogue"
 guid: "8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a"
-version: "1.3.0.0"
+version: "1.3.1.0"
 targetAbi: "12.0.0.0"
 framework: "net10.0"
 owner: "babeley"
@@ -16,11 +16,8 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.Catalogue.dll"
 changelog: |
-  - 1.3.0.0: Corrige un bug sérieux : insérer le bouton comme enfant réel du bandeau
-    React cassait parfois la réconciliation de React et affichait un second bandeau en
-    double (typiquement en naviguant vers une fiche). Le bouton n'est plus du tout
-    inséré dans le bandeau : il reste hors de l'arbre React (comme au tout début du
-    plugin), positionné en `fixed` juste à gauche de l'avatar par un calcul de
-    position dynamique, recalculé au redimensionnement et périodiquement. Toujours
-    icône seule avec infobulle (plus de libellé "Catalogue"/"Fermer" en toutes
-    lettres), et position identique sur toutes les vues, y compris le tableau de bord.
+  - 1.3.1.0: Nouvelle icône (boîte à fiches). Corrige la superposition avec le bouton
+    recherche de Jellyfin : le calcul de position ciblait "le dernier élément
+    cliquable du bandeau", pas fiable si un autre bouton se trouve après l'avatar
+    dans le DOM. Cible maintenant précisément l'avatar via sa classe MUI dédiée
+    (.MuiAvatar-root).

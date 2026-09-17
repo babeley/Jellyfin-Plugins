@@ -26,9 +26,11 @@
     var BUTTON_SIZE = 40;
     var BUTTON_GAP = 8;
 
-    // Folder/binder glyph - explicit for "Catalogue".
-    var ICON_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">'
-        + '<path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"></path></svg>';
+    // Card file box / archive box glyph (like the U+1F5C3 card-index-box emoji), more
+    // explicit for "Catalogue" than a plain folder.
+    var ICON_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" '
+        + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+        + '<path d="M4 8h16v12H4z"></path><path d="M2 8 6 4h12l4 4"></path><path d="M10 12h4"></path></svg>';
     var CLOSE_ICON_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">'
         + '<path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6z"></path></svg>';
 
@@ -115,22 +117,28 @@
             this.positionButton();
         },
 
-        // The rightmost actionable element in the header is the avatar/profile button
-        // in every Jellyfin view we've seen (library pages and admin pages alike), so we
-        // anchor to it rather than assuming a specific header layout.
+        // Targets the avatar specifically via MUI's own Avatar component class
+        // (.MuiAvatar-root - stable, semantic, unambiguous) rather than "the last
+        // clickable element in the header", which could land on the search button
+        // depending on the exact DOM order. If more than one header is present in the
+        // DOM (seen during page-transition animations, or possibly stray leftovers),
+        // search from the last one backwards and skip any with zero height (hidden).
         findAvatarButton: function () {
-            var header = document.querySelector('header.MuiAppBar-root, .MuiAppBar-root');
-            if (!header) {
-                return null;
+            var headers = document.querySelectorAll('header.MuiAppBar-root, .MuiAppBar-root');
+            for (var i = headers.length - 1; i >= 0; i--) {
+                var header = headers[i];
+                if (header.getBoundingClientRect().height === 0) {
+                    continue;
+                }
+
+                var avatar = header.querySelector('.MuiAvatar-root');
+                if (avatar) {
+                    var clickable = avatar.closest('button, a, [role="button"]');
+                    return clickable || avatar;
+                }
             }
 
-            var candidates = header.querySelectorAll('button, a[role="button"], .MuiIconButton-root, .MuiButtonBase-root');
-            if (candidates.length === 0) {
-                return null;
-            }
-
-            var last = candidates[candidates.length - 1];
-            return last.getBoundingClientRect().width > 0 ? last : null;
+            return null;
         },
 
         positionButton: function () {

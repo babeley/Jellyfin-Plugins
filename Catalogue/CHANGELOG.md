@@ -4,6 +4,13 @@ Historique complet du plugin. `build.yaml` ne contient que l'entrée de la versi
 cours de packaging (voir pourquoi dans le README, section "Publier une nouvelle
 version") : c'est ce fichier-ci qu'il faut lire pour l'historique complet.
 
+## 1.3.1.0
+
+Nouvelle icône (boîte à fiches). Corrige la superposition avec le bouton recherche de
+Jellyfin : le calcul de position ciblait "le dernier élément cliquable du bandeau", pas
+fiable si un autre bouton se trouve après l'avatar dans le DOM. Cible maintenant
+précisément l'avatar via sa classe MUI dédiée (.MuiAvatar-root).
+
 ## 1.3.0.0
 
 Corrige un bug sérieux : insérer le bouton comme enfant réel du bandeau React cassait
