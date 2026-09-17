@@ -1,29 +1,33 @@
 # Catalogue (plugin Jellyfin)
 
-Ajoute un bouton flottant au client web Jellyfin qui ouvre une page externe (par
-exemple un catalogue personnalisé) dans un nouvel onglet ou la fenêtre courante.
-Fonctionne aussi bien avec l'ancienne interface Jellyfin que la nouvelle disposition
-**Modern** (React/MUI) de Jellyfin 12.
+Ajoute un bouton dans le bandeau du client web Jellyfin (à côté des icônes
+cast/recherche/avatar) qui ouvre une page externe (par exemple un catalogue
+personnalisé) — soit dans un nouvel onglet, soit dans une iframe en surimpression qui
+garde le bandeau Jellyfin visible. Fonctionne aussi bien avec l'ancienne interface
+Jellyfin que la nouvelle disposition **Modern** (React/MUI) de Jellyfin 12.
 
 ## Comment ça marche
 
-Jellyfin 12 masque (`display: none`) le conteneur d'en-tête legacy dans lequel les
-anciens plugins d'injection (comme
-[jellyfin-plugin-custom-tabs](https://github.com/IAmParadox27/jellyfin-plugin-custom-tabs))
-ajoutent leur contenu. Plutôt que de s'accrocher à cette barre React (fragile : les
-classes CSS générées par Emotion changent à chaque build de jellyfin-web, il faut un
-`MutationObserver` pour survivre aux re-renders), ce plugin :
-
-1. S'enregistre auprès du plugin
+1. Le plugin s'enregistre auprès de
    [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation)
    (prérequis obligatoire) pour patcher `index.html` et y injecter un `<script>` juste
    avant `</body>`.
-2. Ce script ajoute un bouton flottant directement à `document.body`, **en dehors** de
-   l'arbre React. Il n'est donc jamais retiré par un re-render et n'a besoin d'aucun
-   `MutationObserver` : il persiste tel quel pendant toute la session, en legacy comme
-   en Modern layout.
-3. Au clic, le bouton ouvre l'URL configurée (nouvel onglet ou fenêtre courante, selon
-   le réglage choisi dans le Dashboard).
+2. Ce script cherche la barre d'icônes du bandeau React/MUI (`.MuiAppBar-root
+   .MuiStack-root`) et y insère un bouton, en copiant les classes CSS d'une icône
+   voisine (les classes générées par Emotion changent à chaque build de jellyfin-web,
+   donc on les récupère en direct plutôt que de les coder en dur). Un
+   `MutationObserver` réinsère le bouton à chaque fois que React le retire lors d'un
+   re-render. **C'est la partie la plus fragile du plugin** : si la structure du
+   bandeau change dans une future version de jellyfin-web, le sélecteur peut ne plus
+   correspondre. Dans ce cas, le script bascule automatiquement sur un bouton flottant
+   (haut à droite) après quelques secondes de recherche infructueuse, plutôt que de ne
+   rien afficher.
+3. Au clic, selon le réglage "Ouvrir dans un nouvel onglet" du Dashboard :
+   - activé → `window.open()` classique dans un nouvel onglet ;
+   - désactivé → une iframe s'ouvre en surimpression, sous le bandeau Jellyfin qui
+     reste visible (avec un bouton "Fermer"). Ça ne fonctionne que si la page cible
+     autorise son affichage en iframe (pas de `X-Frame-Options`/CSP
+     `frame-ancestors` bloquant) — sinon la surimpression reste vide.
 4. L'URL (avec son token) est servie par un point d'API du plugin
    (`GET /Catalogue/Config`), authentifié comme n'importe quel endpoint Jellyfin —
    jamais exposée à un visiteur non connecté.
@@ -155,8 +159,13 @@ Catalogue/
 Le manifest du dépôt Jellyfin (`manifest.json`, partagé par tous les plugins) vit à la
 racine du dépôt, pas dans ce dossier — voir le README racine.
 
-## Limites connues de cette v1
+## Limites connues
 
-- Pas d'iframe : le catalogue s'ouvre dans un nouvel onglet/la fenêtre courante, pas
-  intégré visuellement dans Jellyfin.
+- L'intégration dans le bandeau dépend de classes MUI (`MuiAppBar-root`,
+  `MuiStack-root`, `MuiIconButton-root`) qui sont stables d'un build à l'autre
+  (contrairement aux classes Emotion générées), mais une refonte du bandeau dans une
+  future version de jellyfin-web peut casser la détection — d'où le repli en bouton
+  flottant.
+- L'iframe en surimpression dépend de l'autorisation d'affichage en iframe côté page
+  cible (voir ci-dessus).
 - Une seule cible configurable (une URL). Pas de gestion multi-liens.

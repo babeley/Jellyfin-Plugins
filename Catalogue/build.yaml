@@ -1,6 +1,6 @@
 name: "Catalogue"
 guid: "8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a"
-version: "1.0.2.0"
+version: "1.1.0.0"
 targetAbi: "12.0.0.0"
 framework: "net10.0"
 owner: "babeley"
@@ -16,6 +16,12 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.Catalogue.dll"
 changelog: |
+  - 1.1.0.0: Le bouton s'intègre maintenant dans le bandeau Jellyfin (à côté des
+    icônes cast/recherche/avatar) au lieu de flotter en bas à droite, avec repli
+    automatique en bouton flottant si le bandeau n'est pas trouvé. Quand "Ouvrir
+    dans un nouvel onglet" est désactivé, le catalogue s'affiche maintenant dans
+    une iframe en surimpression qui garde le bandeau Jellyfin visible, au lieu de
+    remplacer complètement la page.
   - 1.0.2.0: Corrige la version affichée par Jellyfin (0.0.0.0 au lieu de la vraie
     version) : le csproj désactivait la génération d'AssemblyInfo sans fournir de
     remplacement, donc le binaire compilé n'avait jamais de numéro de version.
