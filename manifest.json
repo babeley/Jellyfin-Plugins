@@ -8,6 +8,14 @@
         "category": "General",
         "versions": [
             {
+                "version": "1.1.0.0",
+                "changelog": "- 1.1.0.0: Le bouton s'int\u00e8gre maintenant dans le bandeau Jellyfin (\u00e0 c\u00f4t\u00e9 des\n  ic\u00f4nes cast/recherche/avatar) au lieu de flotter en bas \u00e0 droite, avec repli\n  automatique en bouton flottant si le bandeau n'est pas trouv\u00e9. Quand \"Ouvrir\n  dans un nouvel onglet\" est d\u00e9sactiv\u00e9, le catalogue s'affiche maintenant dans\n  une iframe en surimpression qui garde le bandeau Jellyfin visible, au lieu de\n  remplacer compl\u00e8tement la page.\n- 1.0.2.0: Corrige la version affich\u00e9e par Jellyfin (0.0.0.0 au lieu de la vraie\n  version) : le csproj d\u00e9sactivait la g\u00e9n\u00e9ration d'AssemblyInfo sans fournir de\n  remplacement, donc le binaire compil\u00e9 n'avait jamais de num\u00e9ro de version.\n- 1.0.1.0: Corrige l'enregistrement des r\u00e9glages : la page de config utilisait un\n  <script> qui n'est jamais ex\u00e9cut\u00e9 par la disposition Modern de Jellyfin 12 (le\n  HTML s'affiche mais aucun script s\u00e9par\u00e9 ne tourne). La logique est d\u00e9plac\u00e9e dans\n  des attributs onload/onsubmit inline, qui sont bien ex\u00e9cut\u00e9s dans ce contexte.\n- 1.0.0.0: Version initiale. Bouton flottant configurable (URL + ouverture nouvel onglet/fen\u00eatre courante).\n",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/babeley/Jellyfin-Plugins/releases/download/catalogue-v1.1.0.0/catalogue_1.1.0.0.zip",
+                "checksum": "35e98337736f9d8cc2c4065c98a27ae8",
+                "timestamp": "2026-09-17T07:58:22Z"
+            },
+            {
                 "version": "1.0.2.0",
                 "changelog": "- 1.0.2.0: Corrige la version affich\u00e9e par Jellyfin (0.0.0.0 au lieu de la vraie\n  version) : le csproj d\u00e9sactivait la g\u00e9n\u00e9ration d'AssemblyInfo sans fournir de\n  remplacement, donc le binaire compil\u00e9 n'avait jamais de num\u00e9ro de version.\n- 1.0.1.0: Corrige l'enregistrement des r\u00e9glages : la page de config utilisait un\n  <script> qui n'est jamais ex\u00e9cut\u00e9 par la disposition Modern de Jellyfin 12 (le\n  HTML s'affiche mais aucun script s\u00e9par\u00e9 ne tourne). La logique est d\u00e9plac\u00e9e dans\n  des attributs onload/onsubmit inline, qui sont bien ex\u00e9cut\u00e9s dans ce contexte.\n- 1.0.0.0: Version initiale. Bouton flottant configurable (URL + ouverture nouvel onglet/fen\u00eatre courante).\n",
                 "targetAbi": "12.0.0.0",
