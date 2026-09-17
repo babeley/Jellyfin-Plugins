@@ -4,6 +4,16 @@ Historique complet du plugin. `build.yaml` ne contient que l'entrée de la versi
 cours de packaging (voir pourquoi dans le README, section "Publier une nouvelle
 version") : c'est ce fichier-ci qu'il faut lire pour l'historique complet.
 
+## 1.3.2.0
+
+Corrige le vrai bandeau dupliqué (persistant, pas un artefact d'animation) : si la page
+du catalogue contient un lien qui pointe vers ce même Jellyfin (ex. "voir dans
+Jellyfin"), cliquer dessus dans la surimpression y naviguait l'iframe, chargeant une
+seconde instance Jellyfin complète (avec son propre bandeau) au lieu de la page
+principale. Détecte cette navigation et redirige la vraie page vers cette URL en
+fermant la surimpression, plutôt que de laisser Jellyfin se charger imbriqué dans
+l'iframe.
+
 ## 1.3.1.0
 
 Nouvelle icône (boîte à fiches). Corrige la superposition avec le bouton recherche de

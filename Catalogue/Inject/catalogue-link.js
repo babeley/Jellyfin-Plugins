@@ -253,6 +253,28 @@
             iframe.style.border = '0';
             iframe.style.display = 'block';
 
+            // If the catalogue page links back into this Jellyfin instance (e.g. a
+            // "voir dans Jellyfin" link), clicking it inside the iframe navigates the
+            // iframe TO Jellyfin's own origin - loading a second, fully functional
+            // Jellyfin instance (its own header included) nested inside our overlay,
+            // rather than the top-level page. We can only read contentWindow.location
+            // once same-origin (reading it for the catalogue page itself throws, which
+            // is expected and ignored), so once that happens we break out: navigate the
+            // real top-level page there instead and close the overlay.
+            iframe.addEventListener('load', function () {
+                var href;
+                try {
+                    href = iframe.contentWindow.location.href;
+                } catch (e) {
+                    return; // still on the (cross-origin) catalogue page - expected.
+                }
+
+                if (href && href !== 'about:blank' && iframe.contentWindow.location.origin === window.location.origin) {
+                    window.catalogueLinkPlugin.hideOverlay();
+                    window.location.href = href;
+                }
+            });
+
             overlay.appendChild(iframe);
             document.body.appendChild(overlay);
 
