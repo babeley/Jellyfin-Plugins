@@ -306,6 +306,12 @@
                 if (href && href !== 'about:blank' && iframe.contentWindow.location.origin === window.location.origin) {
                     window.catalogueLinkPlugin.hideOverlay();
                     window.location.href = href;
+                    // Without this, iframe.src stays on the Jellyfin URL we just broke
+                    // out of. showOverlay() only ever (re)loads the catalogue when src
+                    // is still 'about:blank', so every subsequent open would just show
+                    // this same stuck nested Jellyfin page again instead of the
+                    // catalogue - resetting it here is what makes the next open fresh.
+                    iframe.src = 'about:blank';
                 }
             });
 

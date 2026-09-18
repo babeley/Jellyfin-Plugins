@@ -4,6 +4,14 @@ Historique complet du plugin. `build.yaml` ne contient que l'entrée de la versi
 cours de packaging (voir pourquoi dans le README, section "Publier une nouvelle
 version") : c'est ce fichier-ci qu'il faut lire pour l'historique complet.
 
+## 1.3.4.0
+
+Corrige la surimpression qui restait bloquée sur une fiche Jellyfin imbriquée après un
+premier clic sur un lien "voir dans Jellyfin" depuis le catalogue : l'iframe ne se
+réinitialisait jamais vers la page catalogue après cette redirection, donc toute
+réouverture ultérieure raffichait la même fiche figée (d'où le second bandeau permanent
+et les liens qui ne répondaient plus) au lieu du catalogue.
+
 ## 1.3.3.0
 
 Corrige le chevauchement avec le bouton recherche : le calcul de position se basait sur
