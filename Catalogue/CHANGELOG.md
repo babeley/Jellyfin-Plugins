@@ -4,6 +4,14 @@ Historique complet du plugin. `build.yaml` ne contient que l'entrée de la versi
 cours de packaging (voir pourquoi dans le README, section "Publier une nouvelle
 version") : c'est ce fichier-ci qu'il faut lire pour l'historique complet.
 
+## 1.3.3.0
+
+Corrige le chevauchement avec le bouton recherche : le calcul de position se basait sur
+une distance fixe depuis l'avatar seul, alors que d'autres boutons (recherche, cast,
+SyncPlay, icônes d'autres plugins comme jellyfin-enhanced) sont directement collés à
+l'avatar sans marge. Le bouton se positionne maintenant à gauche du bord de tout le
+groupe d'icônes, quel que soit son nombre d'éléments.
+
 ## 1.3.2.0
 
 Corrige le vrai bandeau dupliqué (persistant, pas un artefact d'animation) : si la page

@@ -1,6 +1,6 @@
 name: "Catalogue"
 guid: "8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a"
-version: "1.3.2.0"
+version: "1.3.3.0"
 targetAbi: "12.0.0.0"
 framework: "net10.0"
 owner: "babeley"
@@ -16,10 +16,9 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.Catalogue.dll"
 changelog: |
-  - 1.3.2.0: Corrige le vrai bandeau dupliqué (persistant, pas un artefact
-    d'animation) : si la page du catalogue contient un lien qui pointe vers ce même
-    Jellyfin (ex. "voir dans Jellyfin"), cliquer dessus dans la surimpression y
-    naviguait l'iframe, chargeant une seconde instance Jellyfin complète (avec son
-    propre bandeau) au lieu de la page principale. Détecte cette navigation et
-    redirige la vraie page vers cette URL en fermant la surimpression, plutôt que
-    de laisser Jellyfin se charger imbriqué dans l'iframe.
+  - 1.3.3.0: Corrige le chevauchement avec le bouton recherche : le calcul de
+    position se basait sur une distance fixe depuis l'avatar seul, alors que
+    d'autres boutons (recherche, cast, SyncPlay, icônes d'autres plugins comme
+    jellyfin-enhanced) sont directement collés à l'avatar sans marge. Le bouton se
+    positionne maintenant à gauche du bord de tout le groupe d'icônes, quel que
+    soit son nombre d'éléments.

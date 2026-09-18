@@ -118,11 +118,10 @@
         },
 
         // Targets the avatar specifically via MUI's own Avatar component class
-        // (.MuiAvatar-root - stable, semantic, unambiguous) rather than "the last
-        // clickable element in the header", which could land on the search button
-        // depending on the exact DOM order. If more than one header is present in the
-        // DOM (seen during page-transition animations, or possibly stray leftovers),
-        // search from the last one backwards and skip any with zero height (hidden).
+        // (.MuiAvatar-root - stable, semantic, unambiguous) for vertical alignment. If
+        // more than one header is present in the DOM (seen during page-transition
+        // animations, or possibly stray leftovers), search from the last one backwards
+        // and skip any with zero height (hidden).
         findAvatarButton: function () {
             var headers = document.querySelectorAll('header.MuiAppBar-root, .MuiAppBar-root');
             for (var i = headers.length - 1; i >= 0; i--) {
@@ -141,6 +140,38 @@
             return null;
         },
 
+        // The avatar is not the only thing on the right of the header: search, cast,
+        // SyncPlay, and other plugins' own header buttons (jellyfin-enhanced's dice and
+        // active-streams icons, seen in the wild) sit immediately next to it with
+        // essentially no gap. Positioning a fixed distance left of the avatar alone
+        // landed on top of whichever button happened to be adjacent. Instead, find the
+        // leftmost edge among every clickable element in the header that isn't part of
+        // the Favoris/Films/... nav-link row, and anchor to that - guaranteed clear of
+        // the whole icon cluster regardless of how many buttons other plugins add to it.
+        findIconClusterLeftEdge: function (header) {
+            var navStack = header.querySelector('.MuiStack-root');
+            var candidates = header.querySelectorAll('button, a[href], [role="button"]');
+            var minLeft = null;
+
+            for (var i = 0; i < candidates.length; i++) {
+                var el = candidates[i];
+                if (navStack && navStack.contains(el)) {
+                    continue;
+                }
+
+                var rect = el.getBoundingClientRect();
+                if (rect.width === 0) {
+                    continue;
+                }
+
+                if (minLeft === null || rect.left < minLeft) {
+                    minLeft = rect.left;
+                }
+            }
+
+            return minLeft;
+        },
+
         positionButton: function () {
             var button = document.getElementById(BUTTON_ID);
             if (!button) {
@@ -148,10 +179,13 @@
             }
 
             var avatar = this.findAvatarButton();
-            if (avatar) {
-                var rect = avatar.getBoundingClientRect();
-                button.style.top = (rect.top + (rect.height - BUTTON_SIZE) / 2) + 'px';
-                button.style.left = (rect.left - BUTTON_SIZE - BUTTON_GAP) + 'px';
+            var header = avatar ? avatar.closest('header.MuiAppBar-root, .MuiAppBar-root') : null;
+            var clusterLeft = header ? this.findIconClusterLeftEdge(header) : null;
+
+            if (avatar && clusterLeft !== null) {
+                var avatarRect = avatar.getBoundingClientRect();
+                button.style.top = (avatarRect.top + (avatarRect.height - BUTTON_SIZE) / 2) + 'px';
+                button.style.left = (clusterLeft - BUTTON_SIZE - BUTTON_GAP) + 'px';
             } else {
                 // Header not found (yet, or on this view): fixed fallback position.
                 button.style.top = '12px';
