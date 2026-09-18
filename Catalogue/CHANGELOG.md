@@ -4,6 +4,17 @@ Historique complet du plugin. `build.yaml` ne contient que l'entrée de la versi
 cours de packaging (voir pourquoi dans le README, section "Publier une nouvelle
 version") : c'est ce fichier-ci qu'il faut lire pour l'historique complet.
 
+## 1.4.0.0
+
+Corrige le bouton mal positionné sur petit écran (à côté du menu hamburger au lieu du
+groupe d'icônes). Retour à une insertion réelle dans le bandeau (comme
+jellyfin-enhanced), mais cette fois uniquement dans le groupe d'icônes
+(recherche/cast/SyncPlay/avatar) et jamais dans la ligne de liens de navigation
+(Favoris/Films/...), qui est la partie que React reconstruit à chaque changement de
+page et qui avait causé le bug de bandeau dupliqué en v1.2.1.0. Utilise les classes
+historiques de Jellyfin (paper-icon-button-light/headerButton) pour un rendu et un
+comportement responsive cohérents avec les icônes natives.
+
 ## 1.3.4.0
 
 Corrige la surimpression qui restait bloquée sur une fiche Jellyfin imbriquée après un

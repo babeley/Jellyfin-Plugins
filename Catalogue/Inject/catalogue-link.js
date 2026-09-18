@@ -1,15 +1,23 @@
 // Injected into jellyfin-web's index.html by the Catalogue plugin.
 //
-// v1.2.1.0 inserted the button as a literal DOM child of the header's React-managed
-// nav-link row / icon toolbar. That caused React's reconciliation to get confused on
-// navigation (an untracked extra child throws off its index/key-based diffing) and
-// occasionally rendered a whole duplicate header. This version never touches a
-// React-managed container at all: the button is a position:fixed element appended to
-// document.body (a sibling of the React root, not a child of anything React owns), and
-// its screen position is computed from the avatar button's live bounding box instead of
-// being structurally inserted next to it. Slightly less "native" looking, but immune to
-// that class of bug - and consistent across every view (including admin pages that don't
-// share the library's header layout), which was also requested.
+// v1.3.x kept the button outside the React tree entirely (position:fixed, appended to
+// document.body, positioned via getBoundingClientRect() math) after v1.2.1.0's literal
+// DOM insertion into the header's nav-link row (Favoris/Films/...) caused React's
+// reconciliation to occasionally render a duplicate header. But position:fixed doesn't
+// adapt to responsive layout changes: on narrow viewports the nav-link row collapses
+// into a hamburger toggle positioned at the far left, and our "leftmost clickable
+// element outside the nav row" math picked that up instead of the icon cluster,
+// stranding the button on the wrong side of the screen.
+//
+// v1.4.0.0 goes back to real DOM insertion, but only into the header's ICON cluster
+// (search/cast/SyncPlay/avatar), never the nav-link row. Other plugins (jellyfin-
+// enhanced's "random item" dice button and "active streams" button) insert into that
+// exact same cluster using Jellyfin's own legacy header-button classes
+// (paper-icon-button-light / headerButton) and visibly behave correctly at every
+// viewport size, including responsively - the nav-link row is the part of the header
+// React re-renders on every navigation (to update which link is highlighted), while the
+// icon cluster's children don't change with the route, which is presumably why
+// inserting into the icon cluster doesn't trigger the same reconciliation bug.
 //
 // The same button doubles as the overlay's close control: an in-app iframe overlay,
 // toggled by clicking it (icon swaps to a close glyph while open), keeps the Jellyfin
@@ -23,8 +31,8 @@
 
     var BUTTON_ID = 'catalogueLinkButton';
     var OVERLAY_ID = 'catalogueLinkOverlay';
-    var BUTTON_SIZE = 40;
-    var BUTTON_GAP = 8;
+    var HEADER_SEARCH_ATTEMPTS = 30;
+    var HEADER_SEARCH_INTERVAL_MS = 300;
 
     // Card file box / archive box glyph (like the U+1F5C3 card-index-box emoji), more
     // explicit for "Catalogue" than a plain folder.
@@ -37,6 +45,8 @@
     window.catalogueLinkPlugin = {
         config: null,
         isOverlayOpen: false,
+        headerAttempts: 0,
+        headerObserver: null,
 
         init: function () {
             this.injectStyle();
@@ -44,21 +54,13 @@
             this.observeNavigation();
         },
 
-        // Injected once: the button's own look (we no longer copy classes from any
-        // Jellyfin element, so we own its styling outright) plus the accented "close"
-        // state.
+        // Injected once: the accented "close" state, which needs to stand out
+        // regardless of whichever tier's classes the button otherwise carries.
         injectStyle: function () {
             var style = document.createElement('style');
             style.textContent =
-                '#' + BUTTON_ID + ' {'
-                + 'position: fixed; width: ' + BUTTON_SIZE + 'px; height: ' + BUTTON_SIZE + 'px;'
-                + 'border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center;'
-                + 'background: transparent; color: rgba(255, 255, 255, 0.85); cursor: pointer;'
-                + 'z-index: 1100;'
-                + '}'
-                + '#' + BUTTON_ID + ':hover { background: rgba(255, 255, 255, 0.1); }'
-                + '#' + BUTTON_ID + '.catalogueLinkActive, #' + BUTTON_ID + '.catalogueLinkActive:hover {'
-                + 'background: #00a4dc; color: #fff;'
+                '#' + BUTTON_ID + '.catalogueLinkActive, #' + BUTTON_ID + '.catalogueLinkActive:hover {'
+                + 'background: #00a4dc !important; color: #fff !important;'
                 + '}';
             document.head.appendChild(style);
         },
@@ -87,42 +89,20 @@
 
                 window.catalogueLinkPlugin.config = config;
                 window.catalogueLinkPlugin.createOverlay();
-                window.catalogueLinkPlugin.renderButton();
-                window.catalogueLinkPlugin.watchPosition();
+                window.catalogueLinkPlugin.tryInsertButton();
             }).catch(function (error) {
                 console.error('Catalogue: failed to fetch config', error);
             });
         },
 
-        // --- Button: created once, outside the React tree, repositioned continuously ---
+        // --- Locating the icon cluster (never the nav-link row) ---
 
-        renderButton: function () {
-            if (document.getElementById(BUTTON_ID)) {
-                return;
-            }
-
-            var button = document.createElement('button');
-            button.id = BUTTON_ID;
-            button.type = 'button';
-            button.innerHTML = ICON_SVG;
-            button.title = 'Catalogue';
-            button.setAttribute('aria-label', 'Catalogue');
-
-            button.addEventListener('click', function (e) {
-                e.preventDefault();
-                window.catalogueLinkPlugin.handleClick();
-            });
-
-            document.body.appendChild(button);
-            this.positionButton();
-        },
-
-        // Targets the avatar specifically via MUI's own Avatar component class
-        // (.MuiAvatar-root - stable, semantic, unambiguous) for vertical alignment. If
-        // more than one header is present in the DOM (seen during page-transition
-        // animations, or possibly stray leftovers), search from the last one backwards
-        // and skip any with zero height (hidden).
-        findAvatarButton: function () {
+        // The avatar's own immediate wrapper is a small box by itself; the icon
+        // cluster (search/cast/SyncPlay, and other plugins' own buttons) is that
+        // wrapper's previous sibling. Confirmed against real DOM from the field:
+        //   <div class="MuiBox-root">[dice][active-streams][SyncPlay][cast][search]</div>
+        //   <div class="MuiBox-root">[avatar]</div>
+        findIconCluster: function () {
             var headers = document.querySelectorAll('header.MuiAppBar-root, .MuiAppBar-root');
             for (var i = headers.length - 1; i >= 0; i--) {
                 var header = headers[i];
@@ -131,82 +111,122 @@
                 }
 
                 var avatar = header.querySelector('.MuiAvatar-root');
-                if (avatar) {
-                    var clickable = avatar.closest('button, a, [role="button"]');
-                    return clickable || avatar;
+                if (!avatar) {
+                    continue;
+                }
+
+                var avatarButton = avatar.closest('button, a, [role="button"]');
+                var avatarBox = avatarButton ? avatarButton.parentElement : null;
+                if (avatarBox && avatarBox.previousElementSibling) {
+                    return avatarBox.previousElementSibling;
                 }
             }
 
             return null;
         },
 
-        // The avatar is not the only thing on the right of the header: search, cast,
-        // SyncPlay, and other plugins' own header buttons (jellyfin-enhanced's dice and
-        // active-streams icons, seen in the wild) sit immediately next to it with
-        // essentially no gap. Positioning a fixed distance left of the avatar alone
-        // landed on top of whichever button happened to be adjacent. Instead, find the
-        // leftmost edge among every clickable element in the header that isn't part of
-        // the Favoris/Films/... nav-link row, and anchor to that - guaranteed clear of
-        // the whole icon cluster regardless of how many buttons other plugins add to it.
-        findIconClusterLeftEdge: function (header) {
-            var navStack = header.querySelector('.MuiStack-root');
-            var candidates = header.querySelectorAll('button, a[href], [role="button"]');
-            var minLeft = null;
-
-            for (var i = 0; i < candidates.length; i++) {
-                var el = candidates[i];
-                if (navStack && navStack.contains(el)) {
-                    continue;
-                }
-
-                var rect = el.getBoundingClientRect();
-                if (rect.width === 0) {
-                    continue;
-                }
-
-                if (minLeft === null || rect.left < minLeft) {
-                    minLeft = rect.left;
-                }
-            }
-
-            return minLeft;
-        },
-
-        positionButton: function () {
-            var button = document.getElementById(BUTTON_ID);
-            if (!button) {
+        tryInsertButton: function () {
+            if (document.getElementById(BUTTON_ID)) {
                 return;
             }
 
-            var avatar = this.findAvatarButton();
-            var header = avatar ? avatar.closest('header.MuiAppBar-root, .MuiAppBar-root') : null;
-            var clusterLeft = header ? this.findIconClusterLeftEdge(header) : null;
+            var cluster = this.findIconCluster();
+            if (cluster) {
+                this.insertButton(cluster);
+                this.observeHeader();
+                return;
+            }
 
-            if (avatar && clusterLeft !== null) {
-                var avatarRect = avatar.getBoundingClientRect();
-                button.style.top = (avatarRect.top + (avatarRect.height - BUTTON_SIZE) / 2) + 'px';
-                button.style.left = (clusterLeft - BUTTON_SIZE - BUTTON_GAP) + 'px';
+            this.headerAttempts++;
+            if (this.headerAttempts < HEADER_SEARCH_ATTEMPTS) {
+                setTimeout(this.tryInsertButton.bind(this), HEADER_SEARCH_INTERVAL_MS);
             } else {
-                // Header not found (yet, or on this view): fixed fallback position.
-                button.style.top = '12px';
-                button.style.left = (window.innerWidth - BUTTON_SIZE - 16) + 'px';
+                console.debug('Catalogue: icon cluster not found after retries, using a floating button instead');
+                this.renderFloatingButton();
             }
         },
 
-        watchPosition: function () {
-            var self = this;
+        insertButton: function (cluster) {
+            if (document.getElementById(BUTTON_ID)) {
+                return;
+            }
 
-            window.addEventListener('resize', function () {
-                self.positionButton();
+            var button = document.createElement('button');
+            button.id = BUTTON_ID;
+            // Jellyfin's own legacy header-button classes/custom-element, still styled
+            // correctly (including responsively) in the Modern layout - the same
+            // convention jellyfin-enhanced's header buttons visibly rely on.
+            button.setAttribute('is', 'paper-icon-button-light');
+            button.className = 'headerButton headerButtonRight paper-icon-button-light';
+            button.type = 'button';
+            button.title = 'Catalogue';
+            button.setAttribute('aria-label', 'Catalogue');
+            button.innerHTML = ICON_SVG;
+
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.catalogueLinkPlugin.handleClick();
             });
 
-            // Re-check periodically rather than via a MutationObserver: we only read
-            // positions here (never insert/remove DOM nodes), so there is no risk of
-            // interfering with React, but a MutationObserver on the whole header would
-            // fire far more often than needed for something this cheap to just poll.
-            setInterval(function () {
-                self.positionButton();
-            }, 1000);
+            cluster.appendChild(button);
+        },
+
+        observeHeader: function () {
+            if (this.headerObserver) {
+                return;
+            }
+
+            var self = this;
+            this.headerObserver = new MutationObserver(function () {
+                if (document.getElementById(BUTTON_ID)) {
+                    return;
+                }
+                var cluster = self.findIconCluster();
+                if (cluster) {
+                    self.insertButton(cluster);
+                }
+            });
+
+            this.headerObserver.observe(document.body, { childList: true, subtree: true });
+        },
+
+        // Last-resort fallback if the icon cluster's markup ever changes enough that
+        // findIconCluster() can't locate it: better a working floating button than
+        // none at all.
+        renderFloatingButton: function () {
+            if (document.getElementById(BUTTON_ID)) {
+                return;
+            }
+
+            var link = document.createElement('button');
+            link.id = BUTTON_ID;
+            link.type = 'button';
+            link.title = 'Catalogue';
+            link.setAttribute('aria-label', 'Catalogue');
+
+            link.style.position = 'fixed';
+            link.style.right = '20px';
+            link.style.top = '20px';
+            link.style.zIndex = '2147483000';
+            link.style.width = '40px';
+            link.style.height = '40px';
+            link.style.borderRadius = '50%';
+            link.style.border = 'none';
+            link.style.display = 'flex';
+            link.style.alignItems = 'center';
+            link.style.justifyContent = 'center';
+            link.style.background = '#00a4dc';
+            link.style.color = '#fff';
+            link.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.45)';
+            link.style.cursor = 'pointer';
+            link.innerHTML = ICON_SVG;
+
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.catalogueLinkPlugin.handleClick();
+            });
+
+            document.body.appendChild(link);
         },
 
         // Swaps the button between the "open" (Catalogue) and "close" (Fermer) states.
