@@ -8,6 +8,14 @@
         "category": "General",
         "versions": [
             {
+                "version": "1.3.4.0",
+                "changelog": "- 1.3.4.0: Corrige la surimpression qui restait bloqu\u00e9e sur une fiche Jellyfin\n  imbriqu\u00e9e apr\u00e8s un premier clic sur un lien \"voir dans Jellyfin\" depuis le\n  catalogue : l'iframe ne se r\u00e9initialisait jamais vers la page catalogue apr\u00e8s\n  cette redirection, donc toute r\u00e9ouverture ult\u00e9rieure raffichait la m\u00eame fiche\n  fig\u00e9e (d'o\u00f9 le second bandeau permanent et les liens qui ne r\u00e9pondaient plus)\n  au lieu du catalogue.\n",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/babeley/Jellyfin-Plugins/releases/download/catalogue-v1.3.4.0/catalogue_1.3.4.0.zip",
+                "checksum": "371c484e8e9cf8d90e1ee0a711685f08",
+                "timestamp": "2026-09-18T12:36:16Z"
+            },
+            {
                 "version": "1.3.2.0",
                 "changelog": "- 1.3.2.0: Corrige le vrai bandeau dupliqu\u00e9 (persistant, pas un artefact\n  d'animation) : si la page du catalogue contient un lien qui pointe vers ce m\u00eame\n  Jellyfin (ex. \"voir dans Jellyfin\"), cliquer dessus dans la surimpression y\n  naviguait l'iframe, chargeant une seconde instance Jellyfin compl\u00e8te (avec son\n  propre bandeau) au lieu de la page principale. D\u00e9tecte cette navigation et\n  redirige la vraie page vers cette URL en fermant la surimpression, plut\u00f4t que\n  de laisser Jellyfin se charger imbriqu\u00e9 dans l'iframe.\n",
                 "targetAbi": "12.0.0.0",
