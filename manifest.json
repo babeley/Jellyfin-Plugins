@@ -8,6 +8,14 @@
         "category": "General",
         "versions": [
             {
+                "version": "1.4.1.0",
+                "changelog": "- 1.4.1.0: Nouvelle ic\u00f4ne : Material Symbols \"view_list\" (fournie par l'utilisateur),\n  \u00e0 la place du pictogramme dessin\u00e9 \u00e0 la main.\n- 1.4.0.0: Corrige le bouton mal positionn\u00e9 sur petit \u00e9cran (\u00e0 c\u00f4t\u00e9 du menu\n  hamburger au lieu du groupe d'ic\u00f4nes). Retour \u00e0 une insertion r\u00e9elle dans le\n  bandeau (comme jellyfin-enhanced), mais cette fois uniquement dans le groupe\n  d'ic\u00f4nes (recherche/cast/SyncPlay/avatar) et jamais dans la ligne de liens de\n  navigation (Favoris/Films/...), qui est la partie que React reconstruit \u00e0\n  chaque changement de page et qui avait caus\u00e9 le bug de bandeau dupliqu\u00e9 en\n  v1.2.1.0. Utilise les classes historiques de Jellyfin\n  (paper-icon-button-light/headerButton) pour un rendu et un comportement\n  responsive coh\u00e9rents avec les ic\u00f4nes natives.\n",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/babeley/Jellyfin-Plugins/releases/download/catalogue-v1.4.1.0/catalogue_1.4.1.0.zip",
+                "checksum": "b60d0189b9539f336100784fb645c5b4",
+                "timestamp": "2026-09-18T13:07:24Z"
+            },
+            {
                 "version": "1.3.4.0",
                 "changelog": "- 1.3.4.0: Corrige la surimpression qui restait bloqu\u00e9e sur une fiche Jellyfin\n  imbriqu\u00e9e apr\u00e8s un premier clic sur un lien \"voir dans Jellyfin\" depuis le\n  catalogue : l'iframe ne se r\u00e9initialisait jamais vers la page catalogue apr\u00e8s\n  cette redirection, donc toute r\u00e9ouverture ult\u00e9rieure raffichait la m\u00eame fiche\n  fig\u00e9e (d'o\u00f9 le second bandeau permanent et les liens qui ne r\u00e9pondaient plus)\n  au lieu du catalogue.\n",
                 "targetAbi": "12.0.0.0",
