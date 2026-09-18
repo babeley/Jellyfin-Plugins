@@ -1,6 +1,6 @@
 name: "Catalogue"
 guid: "8a33dd74-dd06-4b9e-bf5e-ca8769d8c25a"
-version: "1.4.0.0"
+version: "1.4.1.0"
 targetAbi: "12.0.0.0"
 framework: "net10.0"
 owner: "babeley"
@@ -16,6 +16,8 @@ category: "General"
 artifacts:
   - "Jellyfin.Plugin.Catalogue.dll"
 changelog: |
+  - 1.4.1.0: Nouvelle icône : Material Symbols "view_list" (fournie par l'utilisateur),
+    à la place du pictogramme dessiné à la main.
   - 1.4.0.0: Corrige le bouton mal positionné sur petit écran (à côté du menu
     hamburger au lieu du groupe d'icônes). Retour à une insertion réelle dans le
     bandeau (comme jellyfin-enhanced), mais cette fois uniquement dans le groupe

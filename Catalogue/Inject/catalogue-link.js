@@ -34,11 +34,9 @@
     var HEADER_SEARCH_ATTEMPTS = 30;
     var HEADER_SEARCH_INTERVAL_MS = 300;
 
-    // Card file box / archive box glyph (like the U+1F5C3 card-index-box emoji), more
-    // explicit for "Catalogue" than a plain folder.
-    var ICON_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" '
-        + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
-        + '<path d="M4 8h16v12H4z"></path><path d="M2 8 6 4h12l4 4"></path><path d="M10 12h4"></path></svg>';
+    // Material Symbols "view_list".
+    var ICON_SVG = '<svg viewBox="0 -960 960 960" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">'
+        + '<path d="M360-240h440v-107H360v107ZM160-613h120v-107H160v107Zm0 187h120v-107H160v107Zm0 186h120v-107H160v107Zm200-186h440v-107H360v107Zm0-187h440v-107H360v107ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Z"></path></svg>';
     var CLOSE_ICON_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">'
         + '<path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6z"></path></svg>';
 

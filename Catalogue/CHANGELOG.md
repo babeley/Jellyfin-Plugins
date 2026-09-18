@@ -4,6 +4,11 @@ Historique complet du plugin. `build.yaml` ne contient que l'entrée de la versi
 cours de packaging (voir pourquoi dans le README, section "Publier une nouvelle
 version") : c'est ce fichier-ci qu'il faut lire pour l'historique complet.
 
+## 1.4.1.0
+
+Nouvelle icône : Material Symbols "view_list" (fournie par l'utilisateur), à la place
+du pictogramme dessiné à la main.
+
 ## 1.4.0.0
 
 Corrige le bouton mal positionné sur petit écran (à côté du menu hamburger au lieu du
